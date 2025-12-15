@@ -1,22 +1,27 @@
-import streamlit as st
-import pickle
-import numpy as np
+from flask import Flask, request, jsonify
+import joblib
+import pandas as pd
 
-# Load the trained model
-with open("CR.pkl", "rb") as f:
-    model = pickle.load(f)
+# Initialize Flask app
+app = Flask(__name__)
 
-st.title("Clash Royale Card Type Predictor 🏰")
+# Load trained model (NOT a DataFrame)
+model = joblib.load("model.pkl")
 
-st.write("Enter card details to predict whether it is a **troop**, **spell**, or **building**.")
+@app.route("/predict", methods=["POST"])
+def predict():
+    data = request.get_json()
 
-# User inputs
-hitpoints = st.number_input("Hitpoints", min_value=0, value=1500)
-elixir_cost = st.number_input("Elixir Cost", min_value=0, value=4)
-usage = st.number_input("Usage (%)", min_value=0.0, value=20.5)
+    # Convert input JSON to DataFrame
+    input_data = pd.DataFrame([data])
 
-if st.button("Predict Card Type"):
-    input_data = np.array([[hitpoints, elixir_cost, usage]])
+    # Make prediction
     prediction = model.predict(input_data)
-    st.success(f"Predicted Card Type: **{prediction[0]}**")
+
+    return jsonify({
+        "prediction": prediction[0]
+    })
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
