@@ -1,50 +1,30 @@
-
 import streamlit as st
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
+import os
 
-st.set_page_config(page_title="Clash Royale Card Type Predictor")
+st.set_page_config(page_title="Clash Royale Cards", layout="wide")
 
-st.title("🎮 Clash Royale Card Type Prediction")
-st.write("Predict whether a card is **Troop / Spell / Building** using Logistic Regression")
+# Get directory of app.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Load dataset
-data = pd.read_excel("clash_royale_cards.xlsx")
+# Excel file path
+DATA_PATH = os.path.join(BASE_DIR, "clash_royale_cards.xlsx")
 
-# Features & target
-X = data[["hitpoints", "elixirCost", "usage"]]
-y = data["type"]
+# Load Excel file safely
+try:
+    data = pd.read_excel(DATA_PATH)
+except FileNotFoundError:
+    st.error("❌ File 'clash_royale_cards.xlsx' not found.")
+    st.write("📂 Files available in app directory:")
+    st.write(os.listdir(BASE_DIR))
+    st.stop()
 
-# Preprocessing
-imputer = SimpleImputer(strategy="mean")
-X = imputer.fit_transform(X)
+# App UI
+st.title("🏰 Clash Royale Cards Dataset")
 
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
+st.subheader("Dataset Preview")
+st.dataframe(data)
 
-# Train model
-model = LogisticRegression(max_iter=1000)
-model.fit(X, y)
-
-st.success("Model trained successfully!")
-
-st.header("Enter Card Details")
-
-# User Inputs
-hitpoints = st.number_input("Hitpoints", min_value=0)
-elixirCost = st.number_input("Elixir Cost", min_value=0)
-usage = st.number_input("Usage (%)", min_value=0.0)
-
-# Prediction
-if st.button("Predict Card Type"):
-    new_card = [[hitpoints, elixirCost, usage]]
-    new_card = imputer.transform(new_card)
-    new_card = scaler.transform(new_card)
-
-    prediction = model.predict(new_card)
-
-    st.subheader("Prediction Result")
-    st.success(f"Predicted Card Type: **{prediction[0]}**")
-  
+st.subheader("Dataset Info")
+st.write(f"Rows: {data.shape[0]}")
+st.write(f"Columns: {data.shape[1]}")
